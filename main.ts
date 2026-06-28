@@ -38,14 +38,17 @@ interface BookOrbitSettings {
   password: string;
   outputFolder: string;
   lastSyncTime: string;
+  customProperties: string;
 }
 
+// Defines the default settings for the plugin on install
 const DEFAULT_SETTINGS: BookOrbitSettings = {
   serverUrl: "",
   username: "",
   password: "",
   outputFolder: "Books",
   lastSyncTime: "",
+  customProperties: "",
 };
 
 export default class BookOrbitPlugin extends Plugin {
@@ -266,11 +269,15 @@ export default class BookOrbitPlugin extends Plugin {
     }
   }
 
+// Defines what will be shown in the full exported file
   buildFullNote(
     annotations: Annotation[],
     bookUrl: string,
     first: Annotation
   ): string {
+    const customProps = this.settings.customProperties
+      ? this.settings.customProperties + "\n"
+      : "";
     const now = new Date().toISOString();
     const header = `---
 title: "${first.bookTitle}"
@@ -278,7 +285,7 @@ author: "${first.author}"
 bookorbit_book_id: ${first.bookId}
 bookorbit_url: ${bookUrl}
 last_synced: ${now}
----
+${customProps}---
 
 # ${first.bookTitle}
 *${first.author}*
@@ -399,6 +406,18 @@ class BookOrbitSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+    new Setting (containerEl)
+      .setName("Custom properties")
+      .setDesc("Add custom properties to all synced highlights.")
+      .addTextArea ((text) => {
+        text 
+          .setPlaceholder("Property: PropertyValue")
+          .setValue(this.plugin.settings.customProperties)
+          .onChange(async (value) => {
+            this.plugin.settings.customProperties = value;
+            await this.plugin.saveSettings();
+          })
+      });
 
     new Setting(containerEl)
       .setName("Sync now")
