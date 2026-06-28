@@ -1,0 +1,18 @@
+{
+  "name": "bookorbit-sync",
+  "version": "0.1.0",
+  "main": "main.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.20.0",
+    "obsidian": "latest",
+    "typescript": "^5.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.20.2": true
+  }
+}

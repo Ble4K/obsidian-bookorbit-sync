@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "module": "CommonJS",
+    "target": "ES6",
+    "lib": ["ES2017", "DOM"],
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "moduleResolution": "bundler"
+  },
+  "include": ["**/*.ts"]
+}
