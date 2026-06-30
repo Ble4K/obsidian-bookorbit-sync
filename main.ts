@@ -39,6 +39,7 @@ interface BookOrbitSettings {
   outputFolder: string;
   lastSyncTime: string;
   customProperties: string;
+  syncOnLaunch: boolean;
 }
 
 // Defines the default settings for the plugin on install
@@ -49,6 +50,7 @@ const DEFAULT_SETTINGS: BookOrbitSettings = {
   outputFolder: "Books",
   lastSyncTime: "",
   customProperties: "",
+  syncOnLaunch: true,
 };
 
 export default class BookOrbitPlugin extends Plugin {
@@ -71,11 +73,13 @@ export default class BookOrbitPlugin extends Plugin {
 
     this.addSettingTab(new BookOrbitSettingTab(this.app, this));
 
+    // The highlights will auto sync if these settings are present
     this.app.workspace.onLayoutReady(async () => {
       if (
         this.settings.serverUrl &&
         this.settings.username &&
-        this.settings.password
+        this.settings.password &&
+        this.settings.syncOnLaunch
       ) {
         await this.runSync();
       }
@@ -420,6 +424,18 @@ class BookOrbitSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
+      .setName("Sync on launch?")
+      .setDesc("Enable or disable automatic syncing of highlights on launch of Obsidian")
+      .addToggle((toggle) =>
+        toggle
+        .setValue(this.plugin.settings.syncOnLaunch)
+        .onChange(async (value) => {
+          this.plugin.settings.syncOnLaunch = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
       .setName("Sync now")
       .setDesc("Manually trigger a sync.")
       .addButton((btn) =>
@@ -439,9 +455,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Reset sync")
-      .setDesc(
-        "Clears the last sync time. Next sync will re-import everything."
-      )
+      .setDesc("Clears the last sync time. Next sync will re-import everything.")
       .addButton((btn) =>
         btn
           .setButtonText("Reset")
