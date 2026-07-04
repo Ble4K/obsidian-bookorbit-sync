@@ -37,7 +37,7 @@ interface BookOrbitSettings {
   username: string;
   password: string;
   outputFolder: string;
-  includeChapter: boolean;
+  includeMetadata: boolean;
   lastSyncTime: string;
   customProperties: string;
   syncOnLaunch: boolean;
@@ -49,7 +49,7 @@ const DEFAULT_SETTINGS: BookOrbitSettings = {
   username: "",
   password: "",
   outputFolder: "Books",
-  includeChapter: true,
+  includeMetadata: true,
   lastSyncTime: "",
   customProperties: "",
   syncOnLaunch: true,
@@ -304,7 +304,7 @@ ${customProps}---
     for (const annotation of annotations) {
       const date = this.formatDate(annotation.createdAt);
       const source = this.formatSource(annotation.origin);
-      const chapter = annotation.chapterTitle && this.settings.includeChapter ? annotation.chapterTitle + " · " : "";
+      const chapter = annotation.chapterTitle && this.settings.includeMetadata ? annotation.chapterTitle + " · " : "";
 
       block += `---\n\n`;
       block += `> ${annotation.text.replace(/\n/g, "\n> ")}\n\n`;
@@ -313,7 +313,9 @@ ${customProps}---
         block += `> [!NOTE] Annotation\n> ${annotation.note}\n\n`;
       }
 
+      if (this.settings.includeMetadata){
       block += `*${source} · ${date} · ${chapter}<span style="color: ${annotation.color};">●</span>*\n\n`;
+      } 
     }
 
     return block;
@@ -398,13 +400,13 @@ class BookOrbitSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Sync chapter titles")
-      .setDesc("Include the chapter title in synced highlights.")
+      .setName("Sync extra metadata")
+      .setDesc("Include source, time highlighted, highlight colour, and chapter title in synced highlights.")
       .addToggle((toggle) =>
         toggle
-        .setValue(this.plugin.settings.includeChapter)
+        .setValue(this.plugin.settings.includeMetadata)
         .onChange(async (value) => {
-          this.plugin.settings.includeChapter = value;
+          this.plugin.settings.includeMetadata = value;
           await this.plugin.saveSettings();
         })
       );
