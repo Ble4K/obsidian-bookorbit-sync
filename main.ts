@@ -477,6 +477,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
           .onClick(async () => {
             this.plugin.settings.lastSyncTime = "";
             await this.plugin.saveSettings();
+            new Notice ("Last sync time cleared");
             this.display();
           })
       );
