@@ -37,6 +37,7 @@ interface BookOrbitSettings {
   username: string;
   password: string;
   outputFolder: string;
+  includeChapter: boolean;
   lastSyncTime: string;
   customProperties: string;
   syncOnLaunch: boolean;
@@ -48,6 +49,7 @@ const DEFAULT_SETTINGS: BookOrbitSettings = {
   username: "",
   password: "",
   outputFolder: "Books",
+  includeChapter: true,
   lastSyncTime: "",
   customProperties: "",
   syncOnLaunch: true,
@@ -178,10 +180,6 @@ export default class BookOrbitPlugin extends Plugin {
     throw new Error(
       `Could not extract access token. Raw headers: ${JSON.stringify(response.headers)}`
     );
-
-    throw new Error(
-      `Could not extract access token. Raw headers: ${JSON.stringify(response.headers)}`
-    );
   }
 
   async fetchNewAnnotations(token: string): Promise<Annotation[]> {
@@ -306,6 +304,7 @@ ${customProps}---
     for (const annotation of annotations) {
       const date = this.formatDate(annotation.createdAt);
       const source = this.formatSource(annotation.origin);
+      const chapter = annotation.chapterTitle && this.settings.includeChapter ? annotation.chapterTitle + " · " : "";
 
       block += `---\n\n`;
       block += `> ${annotation.text.replace(/\n/g, "\n> ")}\n\n`;
@@ -314,7 +313,7 @@ ${customProps}---
         block += `> [!NOTE] Annotation\n> ${annotation.note}\n\n`;
       }
 
-      block += `*${source} · ${date} · <span style="color: ${annotation.color};">●</span>*\n\n`;
+      block += `*${source} · ${date} · ${chapter}<span style="color: ${annotation.color};">●</span>*\n\n`;
     }
 
     return block;
@@ -399,6 +398,18 @@ class BookOrbitSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
+      .setName("Sync chapter titles")
+      .setDesc("Include the chapter title in synced highlights.")
+      .addToggle((toggle) =>
+        toggle
+        .setValue(this.plugin.settings.includeChapter)
+        .onChange(async (value) => {
+          this.plugin.settings.includeChapter = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
       .setName("Output folder")
       .setDesc("Folder in your vault where book notes will be saved.")
       .addText((text) =>
@@ -410,6 +421,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+    
     new Setting (containerEl)
       .setName("Custom properties")
       .setDesc("Add custom properties to all synced highlights.")
@@ -425,7 +437,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Sync on launch?")
-      .setDesc("Enable or disable automatic syncing of highlights on launch of Obsidian")
+      .setDesc("Enable or disable automatic syncing of highlights on launch of Obsidian.")
       .addToggle((toggle) =>
         toggle
         .setValue(this.plugin.settings.syncOnLaunch)
