@@ -314,7 +314,7 @@ ${customProps}---
         block += `> [!NOTE] Annotation\n> ${annotation.note}\n\n`;
       }
 
-      block += `*${source} · ${date}*\n\n`;
+      block += `*${source} · ${date} · <span style="color: ${annotation.color};">●</span>*\n\n`;
     }
 
     return block;
