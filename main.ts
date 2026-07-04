@@ -123,7 +123,7 @@ export default class BookOrbitPlugin extends Plugin {
 
       let totalHighlights = 0;
       for (const bookAnnotations of Object.values(byBook)) {
-        await this.writeBookNote(bookAnnotations);
+        await this.writeBookNote(bookAnnotations, token);
         totalHighlights += bookAnnotations.length;
       }
 
@@ -247,7 +247,7 @@ export default class BookOrbitPlugin extends Plugin {
     return groups;
   }
 
-  async writeBookNote(annotations: Annotation[]) {
+  async writeBookNote(annotations: Annotation[], token: string) {
     const first = annotations[0];
     const safeTitle = first.bookTitle.replace(/[\\/:*?"<>|]/g, "-");
     const folderPath = normalizePath(this.settings.outputFolder);
@@ -261,7 +261,8 @@ export default class BookOrbitPlugin extends Plugin {
     const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 
     if (!existingFile) {
-      const content = this.buildFullNote(annotations, bookUrl, first);
+      const coverPath = await this.downloadCover(first.bookId, safeTitle, token);
+      const content = this.buildFullNote(annotations, bookUrl, first, coverPath);
       await this.app.vault.create(filePath, content);
     } else {
       const file = existingFile as TFile;
@@ -275,10 +276,14 @@ export default class BookOrbitPlugin extends Plugin {
   buildFullNote(
     annotations: Annotation[],
     bookUrl: string,
-    first: Annotation
+    first: Annotation,
+    coverPath : string | null
   ): string {
     const customProps = this.settings.customProperties
       ? this.settings.customProperties + "\n"
+      : "";
+    const coverProperty = coverPath
+      ? `cover: "[[${coverPath}]]"\n`
       : "";
     const now = new Date().toISOString();
     const header = `---
@@ -287,7 +292,7 @@ author: "${first.author}"
 bookorbit_book_id: ${first.bookId}
 bookorbit_url: ${bookUrl}
 last_synced: ${now}
-${customProps}---
+${coverProperty}${customProps}---
 
 # ${first.bookTitle}
 *${first.author}*
@@ -341,6 +346,31 @@ ${customProps}---
     return map[origin] ?? origin;
   }
 
+  async downloadCover(bookId: number, safeTitle: string, token :string): Promise<string | null> {
+    const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
+    const url = `${baseUrl}/api/v1/books/${bookId}/thumbnail`;
+
+    const response = await requestUrl({
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      throw: false,
+    });
+
+    if (response.status !== 200) {
+      return null;
+    }
+
+    const coverFolder = normalizePath(`${this.settings.outputFolder}/covers`);
+    await this.ensureFolder(coverFolder);
+
+    const coverPath = normalizePath(`${coverFolder}/${safeTitle}.jpg`);
+    await this.app.vault.createBinary(coverPath, response.arrayBuffer);
+
+    return coverPath;
+  }
+
   async ensureFolder(path: string) {
     const exists = this.app.vault.getAbstractFileByPath(path);
     if (!exists) {
@@ -348,6 +378,7 @@ ${customProps}---
     }
   }
 }
+
 
 class BookOrbitSettingTab extends PluginSettingTab {
   plugin: BookOrbitPlugin;
@@ -477,7 +508,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
           .onClick(async () => {
             this.plugin.settings.lastSyncTime = "";
             await this.plugin.saveSettings();
-            new Notice ("Last sync time cleared");
+            new Notice("Last sync time cleared");
             this.display();
           })
       );
