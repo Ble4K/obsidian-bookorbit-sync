@@ -177,9 +177,8 @@ export default class BookOrbitPlugin extends Plugin {
       return match[1];
     }
 
-    throw new Error(
-      `Could not extract access token. Raw headers: ${JSON.stringify(response.headers)}`
-    );
+    console.error("BookOrbit Sync: Could not extract access token. Headers:", response.headers);
+    throw new Error("Could not extract access token from login response.");
   }
 
   async fetchNewAnnotations(token: string): Promise<Annotation[]> {
@@ -450,7 +449,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
           .setPlaceholder("Books")
           .setValue(this.plugin.settings.outputFolder)
           .onChange(async (value) => {
-            this.plugin.settings.outputFolder = value.trim() || "Books";
+            this.plugin.settings.outputFolder = value.trim().replace(/\.\./g, "").replace(/^\/+|\/+$/g, "") || "Books";
             await this.plugin.saveSettings();
           })
       );
