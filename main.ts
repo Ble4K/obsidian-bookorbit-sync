@@ -264,7 +264,8 @@ export default class BookOrbitPlugin extends Plugin {
       const content = this.buildFullNote(annotations, bookUrl, first, coverPath);
       await this.app.vault.create(filePath, content);
     } else {
-      const file = existingFile as TFile;
+      if (!(existingFile instanceof TFile)) return;
+      const file = existingFile;
       const existing = await this.app.vault.read(file);
       const toAppend = this.buildHighlightsBlock(annotations);
       await this.app.vault.modify(file, existing + toAppend);
@@ -503,7 +504,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
       .addButton((btn) =>
         btn
           .setButtonText("Reset")
-          .setWarning()
+          .setDestructive()
           .onClick(async () => {
             this.plugin.settings.lastSyncTime = "";
             await this.plugin.saveSettings();
