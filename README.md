@@ -24,7 +24,7 @@ ___
 5. Find **BookOrbit Sync** in the list and toggle it on.
 6. Click the settings (cog) icon next to it to configure your BookOrbit server URL and credentials.
 
-Once approved, you will be able to install the plugin from the [Obsidian Community Plugin Store](https://community.obsidian.md). 
+The plugin is also available to install from Obsidian Community Plugins [here](https://community.obsidian.md/plugins/bookorbit-sync). 
 ___
 ## Known Limitations
 The plugin is currently desktop only as there are bugs on Android that need fixing. This fix will likely be in the next release. 
