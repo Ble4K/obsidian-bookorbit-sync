@@ -12,7 +12,8 @@ An Obsidian plugin that utilises the fantastic highlight handling of [BookOrbit]
 - Option to pull extra metadata (Highlight time, highlight colour, chapter, etc.).
 ___
 ## Requirements
-- The plugin requires the user to have a self-hosted BookOrbit instance. 
+- The plugin requires the user to have a self-hosted BookOrbit instance.
+- The plugin requires the user to have an account for that server. 
 ___
 ## Installation
 ### Manual Installation
@@ -30,7 +31,10 @@ The plugin is currently desktop only as there are bugs on Android that need fixi
 ___
 ## Next Features
 1. Allow the plugin to work on mobile. 
-2. Exclude chosen books from syncing. 
+2. Exclude chosen books from syncing.
+___
+## Privacy & Network Use
+This plugin connects to the BookOrbit server URL you provide in settings, using the credentials you enter, to fetch your own highlights, annotations, and book covers. No data is sent to any third party or any server other than the one you configure.
 ___
 ## License
 This project is licensed under the GNU General Public License v3.0.
