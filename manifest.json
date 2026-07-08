@@ -2,8 +2,8 @@
   "id": "bookorbit-sync",
   "name": "BookOrbit Sync",
   "version": "1.0.0",
-  "minAppVersion": "1.0.0",
-  "description": "Sync reading highlights from BookOrbit to Obsidian.",
+  "minAppVersion": "1.4.0",
+  "description": "Sync reading highlights from BookOrbit.",
   "author": "Ble4K",
   "isDesktopOnly": true
 }
