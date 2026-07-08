@@ -504,7 +504,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
       .addButton((btn) =>
         btn
           .setButtonText("Reset")
-          .setDestructive()
+          .setWarning()
           .onClick(async () => {
             this.plugin.settings.lastSyncTime = "";
             await this.plugin.saveSettings();
