@@ -310,6 +310,7 @@ ${coverProperty}${customProps}---
       const date = this.formatDate(annotation.createdAt);
       const source = this.formatSource(annotation.origin);
       const chapter = annotation.chapterTitle && this.settings.includeMetadata ? annotation.chapterTitle + " · " : "";
+      const page = annotation.pageno !== null && this.settings.includeMetadata ? `Page ${annotation.pageno} · ` : "";
 
       block += `---\n\n`;
       block += `> ${annotation.text.replace(/\n/g, "\n> ")}\n\n`;
@@ -319,7 +320,7 @@ ${coverProperty}${customProps}---
       }
 
       if (this.settings.includeMetadata){
-      block += `*${source} · ${date} · ${chapter}<span style="color: ${annotation.color};">●</span>*\n\n`;
+      block += `*${source} · ${date} · ${chapter}${page}<span style="color: ${annotation.color};">●</span>*\n\n`;
       } 
     }
 
@@ -432,7 +433,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Sync extra metadata")
-      .setDesc("Include source, time highlighted, highlight colour, and chapter title in synced highlights.")
+      .setDesc("Include source, time highlighted, highlight colour, chapter title, and page number in synced highlights.")
       .addToggle((toggle) =>
         toggle
         .setValue(this.plugin.settings.includeMetadata)
