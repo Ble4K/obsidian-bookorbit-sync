@@ -21,7 +21,9 @@ interface Annotation {
   createdAt: string;
   bookTitle: string;
   author: string;
-  jumpFileId: number;
+  jumpFileId: number | null;
+  jumpFileFormat: string | null;
+  cfi: string | null;
   pageno: number | null;
 }
 
@@ -42,6 +44,9 @@ interface BookOrbitSettings {
   customProperties: string;
   syncReadBooks: boolean;
   syncOnLaunch: boolean;
+  readerLinks: boolean;
+  downloadCovers: boolean;
+  colorTags: string;
 }
 
 // Defines the default settings for the plugin on install
@@ -55,6 +60,9 @@ const DEFAULT_SETTINGS: BookOrbitSettings = {
   customProperties: "",
   syncReadBooks: false,
   syncOnLaunch: true,
+  readerLinks: true,
+  downloadCovers: true,
+  colorTags: "",
 };
 
 export default class BookOrbitPlugin extends Plugin {
@@ -345,7 +353,7 @@ for (const key of Object.keys(groups)) {
     const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 
     if (!existingFile) {
-      const coverPath = await this.downloadCover(first.bookId, safeTitle, token);
+      const coverPath = this.settings.downloadCovers ? await this.downloadCover(first.bookId, safeTitle, token) : null;
       const content = this.buildFullNote(annotations, bookUrl, first, coverPath);
       await this.app.vault.create(filePath, content);
     } else {
@@ -373,7 +381,7 @@ for (const key of Object.keys(groups)) {
     const existingFile = this.app.vault.getAbstractFileByPath(filePath);
     if (existingFile) return;
 
-    const coverPath = await this.downloadCover(book.id, safeTitle, token);
+    const coverPath = this.settings.downloadCovers ? await this.downloadCover(book.id, safeTitle, token) : null;
 
     const customProps = this.settings.customProperties
       ? this.settings.customProperties + "\n"
@@ -432,8 +440,41 @@ ${coverProperty}${customProps}---
     return header + this.buildHighlightsBlock(annotations);
   }
 
+  /**
+   * Builds the BookOrbit reader deep link for an annotation, mirroring the
+   * client's annotationReaderRoute(): /read/{bookId}/{fileId}?format=…&cfi=… (or &page=… for PDF).
+   */
+  readerLink(annotation: Annotation): string | null {
+    if (!annotation.jumpFileId || !annotation.jumpFileFormat) return null;
+    const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
+    const params = new URLSearchParams({ format: annotation.jumpFileFormat });
+    if (annotation.cfi) params.set("cfi", annotation.cfi);
+    else if (annotation.pageno !== null) params.set("page", String(annotation.pageno));
+    else return null;
+    return `${baseUrl}/read/${annotation.bookId}/${annotation.jumpFileId}?${params.toString()}`;
+  }
+
+  /**
+   * Parses the "Colour tags" setting (one `#hex = tag` pair per line) into a lookup map.
+   * Keys are lower-cased hex colours; values are tags without the leading '#'.
+   */
+  parseColorTags(): Record<string, string> {
+    const map: Record<string, string> = {};
+    for (const raw of this.settings.colorTags.split("\n")) {
+      const line = raw.trim();
+      if (!line || line.startsWith("//")) continue;
+      const idx = line.indexOf("=");
+      if (idx === -1) continue;
+      const hex = line.slice(0, idx).trim().toLowerCase();
+      const tag = line.slice(idx + 1).trim().replace(/^#/, "");
+      if (hex && tag) map[hex] = tag;
+    }
+    return map;
+  }
+
   buildHighlightsBlock(annotations: Annotation[]): string {
     let block = "";
+    const colorTags = this.parseColorTags();
 
     for (const annotation of annotations) {
       const date = this.formatDate(annotation.createdAt);
@@ -448,9 +489,16 @@ ${coverProperty}${customProps}---
         block += `> [!NOTE] Annotation\n> ${annotation.note}\n\n`;
       }
 
+      const link = this.settings.readerLinks ? this.readerLink(annotation) : null;
+      const linkPart = link ? ` · [Open in reader](${link})` : "";
+      const tag = colorTags[(annotation.color ?? "").toLowerCase()];
+      const tagPart = tag ? ` #${tag}` : "";
+
       if (this.settings.includeMetadata){
-      block += `*${source} · ${date} · ${chapter}${page}<span style="color: ${annotation.color};">●</span>*\n\n`;
-      } 
+      block += `*${source} · ${date} · ${chapter}${page}<span style="color: ${annotation.color};">●</span>${linkPart}*${tagPart}\n\n`;
+      } else if (linkPart || tagPart) {
+      block += `${linkPart ? `*${linkPart.slice(3)}*` : ""}${tagPart}\n\n`;
+      }
     }
 
     return block;
@@ -618,6 +666,43 @@ class BookOrbitSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.syncOnLaunch)
         .onChange(async (value) => {
           this.plugin.settings.syncOnLaunch = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Reader deep links")
+      .setDesc("Append an \"Open in reader\" link to each highlight that jumps to its exact position in the BookOrbit web reader.")
+      .addToggle((toggle) =>
+        toggle
+        .setValue(this.plugin.settings.readerLinks)
+        .onChange(async (value) => {
+          this.plugin.settings.readerLinks = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Download covers")
+      .setDesc("Save book covers into the output folder and reference them from the note's cover property.")
+      .addToggle((toggle) =>
+        toggle
+        .setValue(this.plugin.settings.downloadCovers)
+        .onChange(async (value) => {
+          this.plugin.settings.downloadCovers = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Colour tags")
+      .setDesc("Map highlight colours to Obsidian tags, one per line as `#hex = tag` (e.g. `#FACC15 = hl/cite`). Matching highlights get the tag appended so they can be queried.")
+      .addTextArea((text) =>
+        text
+        .setPlaceholder("#FACC15 = hl/cite\n#4ADE80 = hl/agree")
+        .setValue(this.plugin.settings.colorTags)
+        .onChange(async (value) => {
+          this.plugin.settings.colorTags = value;
           await this.plugin.saveSettings();
         })
       );
