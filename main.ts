@@ -360,7 +360,8 @@ for (const key of Object.keys(groups)) {
 
     if (!existingFile) {
       const coverPath = this.settings.downloadCovers ? await this.downloadCover(first.bookId, safeTitle, token) : null;
-      const content = this.buildFullNote(annotations, bookUrl, first, coverPath);
+      const personalNote = await this.fetchPersonalNote(first.bookId, token);
+      const content = this.buildFullNote(annotations, bookUrl, first, coverPath, personalNote);
       await this.app.vault.create(filePath, content);
     } else {
       if (!(existingFile instanceof TFile)) return;
@@ -392,12 +393,15 @@ for (const key of Object.keys(groups)) {
     if (existingFile) return;
 
     const coverPath = this.settings.downloadCovers ? await this.downloadCover(book.id, safeTitle, token) : null;
-
+    const personalNote = await this.fetchPersonalNote(book.id, token);
     const customProps = this.settings.customProperties
       ? this.settings.customProperties + "\n"
       : "";
     const coverProperty = coverPath
       ? `cover: "[[${coverPath}]]"\n`
+      : "";
+    const personalNoteBlock = personalNote
+      ? `> [!NOTE] Personal Review\n> ${personalNote}\n\n`
       : "";
     const now = new Date().toISOString();
 
@@ -414,7 +418,7 @@ ${coverProperty}${customProps}---
 
 [View in BookOrbit](${bookUrl})
 
-`;
+${personalNoteBlock}`;
 
     await this.app.vault.create(filePath, content);
   }
@@ -424,7 +428,8 @@ ${coverProperty}${customProps}---
     annotations: Annotation[],
     bookUrl: string,
     first: Annotation,
-    coverPath : string | null
+    coverPath : string | null,
+    personalNote: string | null
   ): string {
     const customProps = this.settings.customProperties
       ? this.settings.customProperties + "\n"
@@ -432,6 +437,9 @@ ${coverProperty}${customProps}---
     const coverProperty = coverPath
       ? `cover: "[[${coverPath}]]"\n`
       : "";
+    const personalNoteBlock = personalNote
+     ? `> [!NOTE] Personal Review\n> ${personalNote}\n\n`
+     : "";
     const now = new Date().toISOString();
     const header = `---
 title: "${first.bookTitle}"
@@ -446,7 +454,7 @@ ${coverProperty}${customProps}---
 
 [View in BookOrbit](${bookUrl})
 
-`;
+${personalNoteBlock}`;
     return header + this.buildHighlightsBlock(annotations);
   }
 
@@ -549,7 +557,7 @@ ${coverProperty}${customProps}---
     if (response.status !== 200) {
       return null;
     }
-
+    
     const coverFolder = normalizePath(`${this.settings.outputFolder}/covers`);
     await this.ensureFolder(coverFolder);
 
@@ -565,8 +573,27 @@ ${coverProperty}${customProps}---
       await this.app.vault.createFolder(path);
     }
   }
-}
 
+  async fetchPersonalNote(bookId: number, token :string): Promise<string | null> {
+    const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
+    const url = `${baseUrl}/api/v1/books/${bookId}`;
+
+    const response = await requestUrl({
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      throw: false,
+    });
+
+    if (response.status !== 200) {
+      return null;
+    }
+
+    const bookData = response.json;
+    return bookData.personalNote ?? null;
+  }
+}
 
 class BookOrbitSettingTab extends PluginSettingTab {
   plugin: BookOrbitPlugin;
