@@ -39,6 +39,7 @@ interface BookOrbitSettings {
   username: string;
   password: string;
   outputFolder: string;
+  notesInSubfolder: boolean;
   includeMetadata: boolean;
   lastSyncTime: string;
   customProperties: string;
@@ -63,6 +64,7 @@ const DEFAULT_SETTINGS: BookOrbitSettings = {
   readerLinks: true,
   downloadCovers: true,
   colorTags: "",
+  notesInSubfolder: false,
 };
 
 export default class BookOrbitPlugin extends Plugin {
@@ -342,7 +344,11 @@ for (const key of Object.keys(groups)) {
   async writeBookNote(annotations: Annotation[], token: string) {
     const first = annotations[0];
     const safeTitle = first.bookTitle.replace(/[\\/:*?"<>|]/g, "-");
-    const folderPath = normalizePath(this.settings.outputFolder);
+    const folderPath = normalizePath(
+      this.settings.notesInSubfolder
+        ? `${this.settings.outputFolder}/highlights`
+        : this.settings.outputFolder
+    );
     const safeAuthor = first.author.replace(/[\\/:*?"<>|]/g, "-");
     const filePath = normalizePath(`${folderPath}/${safeTitle} - ${safeAuthor}.md`);
     const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
@@ -370,7 +376,11 @@ for (const key of Object.keys(groups)) {
     const author: string = (book.authors ?? []).join(", ");
     const safeTitle = title.replace(/[\\/:*?"<>|]/g, "-");
     const safeAuthor = author.replace(/[\\/:*?"<>|]/g, "-");
-    const folderPath = normalizePath(this.settings.outputFolder);
+    const folderPath = normalizePath(
+      this.settings.notesInSubfolder
+        ? `${this.settings.outputFolder}/highlights`
+        : this.settings.outputFolder
+    );
     const filePath = normalizePath(`${folderPath}/${safeTitle} - ${safeAuthor}.md`);
     const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
     const bookUrl = `${baseUrl}/annotations?bookId=${book.id}`;
@@ -632,7 +642,19 @@ class BookOrbitSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
-    
+
+    new Setting(containerEl)
+      .setName("Notes in subfolder?")
+      .setDesc("Each book note will be placed in a highlights subfolder.")
+      .addToggle((toggle) =>
+        toggle
+        .setValue(this.plugin.settings.notesInSubfolder)
+        .onChange(async (value) => {
+          this.plugin.settings.notesInSubfolder = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
     new Setting (containerEl)
       .setName("Custom properties")
       .setDesc("Add custom properties to all synced highlights.")
