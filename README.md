@@ -10,12 +10,13 @@ An Obsidian plugin that utilises the fantastic highlight handling of [BookOrbit]
 - API key authentication, with username/password login when no key is configured.
 - Option to add custom frontmatter to all synced notes. 
 - Option to pull extra metadata (Highlight time, highlight colour, chapter, etc.).
-- Reader deep links
-- Download covers option
-- Colour-to-tag mapping
-- Sync BookOrbit personal reviews
-- Sync finished books with no highlights
-- Highlight ordering by page number
+- Reader deep links.
+- Download covers option.
+- Colour-to-tag mapping.
+- Sync BookOrbit personal reviews.
+- Sync finished books with no highlights.
+- Highlight ordering by page number.
+- Option to show the book cover at the top of each note, as well as in its properties.
 ___
 ## Requirements
 - The plugin requires the user to have a self-hosted BookOrbit instance.
