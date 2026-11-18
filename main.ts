@@ -378,7 +378,7 @@ for (const key of Object.keys(groups)) {
 
   async writeEmptyBookNote(book: any, token: string) {
     const title: string = book.title;
-    const author: string = (book.authors ?? []).join(", ");
+    const author: string = (book.authors ?? []).join(", ") || "Unknown Author";
     const safeTitle = title.replace(/[\\/:*?"<>|]/g, "-");
     const safeAuthor = author.replace(/[\\/:*?"<>|]/g, "-");
     const folderPath = normalizePath(
