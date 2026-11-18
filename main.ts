@@ -20,7 +20,7 @@ interface Annotation {
   origin: string;
   createdAt: string;
   bookTitle: string;
-  author: string;
+  author: string | null;
   jumpFileId: number | null;
   jumpFileFormat: string | null;
   cfi: string | null;
@@ -349,7 +349,7 @@ for (const key of Object.keys(groups)) {
         ? `${this.settings.outputFolder}/highlights`
         : this.settings.outputFolder
     );
-    const safeAuthor = first.author.replace(/[\\/:*?"<>|]/g, "-");
+    const safeAuthor = (first.author ?? "Unknown Author").replace(/[\\/:*?"<>|]/g, "-");
     const filePath = normalizePath(`${folderPath}/${safeTitle} - ${safeAuthor}.md`);
     const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
     const bookUrl = `${baseUrl}/annotations?bookId=${first.bookId}`;
@@ -441,16 +441,17 @@ ${personalNoteBlock}`;
      ? `> [!NOTE] Personal Review\n> ${personalNote}\n\n`
      : "";
     const now = new Date().toISOString();
+    const author = first.author ?? "Unknown Author";
     const header = `---
 title: "${first.bookTitle}"
-author: "${first.author}"
+author: "${author}"
 bookorbit_book_id: ${first.bookId}
 bookorbit_url: ${bookUrl}
 last_synced: ${now}
 ${coverProperty}${customProps}---
 
 # ${first.bookTitle}
-*${first.author}*
+*${author}*
 
 [View in BookOrbit](${bookUrl})
 
