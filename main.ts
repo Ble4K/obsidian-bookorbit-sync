@@ -48,6 +48,7 @@ interface BookOrbitSettings {
   syncOnLaunch: boolean;
   readerLinks: boolean;
   downloadCovers: boolean;
+  embedCover: boolean;
   colorTags: string;
 }
 
@@ -65,6 +66,7 @@ const DEFAULT_SETTINGS: BookOrbitSettings = {
   syncOnLaunch: true,
   readerLinks: true,
   downloadCovers: true,
+  embedCover: false,
   colorTags: "",
   notesInSubfolder: false,
 };
@@ -127,7 +129,7 @@ export default class BookOrbitPlugin extends Plugin {
     try {
       const token = await this.login();
       const annotations = await this.fetchNewAnnotations(token);
-      
+
       // Create notes for finished books that don't have one yet
       if (this.settings.syncReadBooks) {
         const libraryIds = await this.fetchLibraries(token);
@@ -296,7 +298,7 @@ async login(): Promise<string> {
   async fetchFinishedBooks(libraryId: number, token: string): Promise<any[]> {
     const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
     const url = `${baseUrl}/api/v1/libraries/${libraryId}/books`;
-    
+
     const response = await requestUrl({
       url,
       method: "POST",
@@ -404,6 +406,9 @@ for (const key of Object.keys(groups)) {
     const coverProperty = coverPath
       ? `cover: "[[${coverPath}]]"\n`
       : "";
+    const coverEmbed = coverPath && this.settings.embedCover
+      ? `![[${coverPath}|200]]\n\n`
+      : "";
     const personalNoteBlock = personalNote
       ? `> [!NOTE] Personal Review\n> ${personalNote}\n\n`
       : "";
@@ -417,7 +422,7 @@ bookorbit_url: ${bookUrl}
 last_synced: ${now}
 ${coverProperty}${customProps}---
 
-# ${title}
+${coverEmbed}# ${title}
 *${author}*
 
 [View in BookOrbit](${bookUrl})
@@ -441,6 +446,9 @@ ${personalNoteBlock}`;
     const coverProperty = coverPath
       ? `cover: "[[${coverPath}]]"\n`
       : "";
+    const coverEmbed = coverPath && this.settings.embedCover
+      ? `![[${coverPath}|200]]\n\n`
+      : "";
     const personalNoteBlock = personalNote
      ? `> [!NOTE] Personal Review\n> ${personalNote}\n\n`
      : "";
@@ -454,7 +462,7 @@ bookorbit_url: ${bookUrl}
 last_synced: ${now}
 ${coverProperty}${customProps}---
 
-# ${first.bookTitle}
+${coverEmbed}# ${first.bookTitle}
 *${author}*
 
 [View in BookOrbit](${bookUrl})
@@ -562,7 +570,7 @@ ${personalNoteBlock}`;
     if (response.status !== 200) {
       return null;
     }
-    
+
     const coverFolder = normalizePath(`${this.settings.outputFolder}/covers`);
     await this.ensureFolder(coverFolder);
 
@@ -705,7 +713,7 @@ class BookOrbitSettingTab extends PluginSettingTab {
       .setName("Custom properties")
       .setDesc("Add custom properties to all synced highlights.")
       .addTextArea ((text) => {
-        text 
+        text
           .setPlaceholder("Property: PropertyValue")
           .setValue(this.plugin.settings.customProperties)
           .onChange(async (value) => {
@@ -758,6 +766,18 @@ class BookOrbitSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.downloadCovers)
         .onChange(async (value) => {
           this.plugin.settings.downloadCovers = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Embed cover in note")
+      .setDesc("Show the downloaded cover image at the top of new book notes. Requires \"Download covers\" to be on.")
+      .addToggle((toggle) =>
+        toggle
+        .setValue(this.plugin.settings.embedCover)
+        .onChange(async (value) => {
+          this.plugin.settings.embedCover = value;
           await this.plugin.saveSettings();
         })
       );
