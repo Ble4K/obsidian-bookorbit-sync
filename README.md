@@ -7,6 +7,7 @@ An Obsidian plugin that utilises the fantastic highlight handling of [BookOrbit]
 - One note per book.
 - Incremental sync for new highlights. 
 - Manual and optional automatic sync. 
+- API key authentication, with username/password login when no key is configured.
 - Option to add custom frontmatter to all synced notes. 
 - Option to pull extra metadata (Highlight time, highlight colour, chapter, etc.).
 - Reader deep links
@@ -27,7 +28,14 @@ ___
 3. Copy the downloaded `main.js` and `manifest.json` into that new folder 
 4. In Obsidian, go to **Settings → Community plugins** and click **Reload plugins**.
 5. Find **BookOrbit Sync** in the list and toggle it on.
-6. Click the settings (cog) icon next to it to configure your BookOrbit server URL and credentials.
+6. Click the settings (cog) icon next to it to configure your BookOrbit server URL and API key, or your username and password.
+
+### API key authentication
+Create a key in BookOrbit under **Settings > You > API keys**, then paste it into the plugin's **API key** setting. A read-only key with access to the libraries you want to sync is sufficient; no additional key permissions are needed. Creating keys requires the **Create API keys** permission on your account.
+
+When an API key is configured, the plugin uses it instead of username/password login for both manual and automatic sync. Clear the key to use username/password login again. An invalid, expired, or revoked key causes sync to fail; the plugin does not fall back to password login.
+
+The key is saved in Obsidian's plugin settings, like the existing password, and is not encrypted. Do not share the plugin's `data.json` file.
 
 The plugin is also available to install from Obsidian Community Plugins [here](https://community.obsidian.md/plugins/bookorbit-sync). 
 ___
@@ -39,7 +47,7 @@ ___
 2. Format and styling templates
 ___
 ## Privacy & Network Use
-This plugin connects to the BookOrbit server URL you provide in settings, using the credentials you enter, to fetch your own highlights, annotations, perosonal reviews, and book covers. No data is sent to any third party or any server other than the one you configure.
+This plugin connects to the BookOrbit server URL you provide in settings, using your API key or username and password, to fetch your own highlights, annotations, perosonal reviews, and book covers. No data is sent to any third party or any server other than the one you configure.
 ___
 ## License
 This project is licensed under the GNU General Public License v3.0.

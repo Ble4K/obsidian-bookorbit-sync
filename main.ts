@@ -36,6 +36,7 @@ interface AnnotationsResponse {
 
 interface BookOrbitSettings {
   serverUrl: string;
+  apiKey: string;
   username: string;
   password: string;
   outputFolder: string;
@@ -53,6 +54,7 @@ interface BookOrbitSettings {
 // Defines the default settings for the plugin on install
 const DEFAULT_SETTINGS: BookOrbitSettings = {
   serverUrl: "",
+  apiKey: "",
   username: "",
   password: "",
   outputFolder: "Books",
@@ -91,8 +93,8 @@ export default class BookOrbitPlugin extends Plugin {
     this.app.workspace.onLayoutReady(async () => {
       if (
         this.settings.serverUrl &&
-        this.settings.username &&
-        this.settings.password &&
+        (this.settings.apiKey ||
+          (this.settings.username && this.settings.password)) &&
         this.settings.syncOnLaunch
       ) {
         await this.runSync();
@@ -111,11 +113,11 @@ export default class BookOrbitPlugin extends Plugin {
   async runSync() {
     if (
       !this.settings.serverUrl ||
-      !this.settings.username ||
-      !this.settings.password
+      (!this.settings.apiKey &&
+        (!this.settings.username || !this.settings.password))
     ) {
       new Notice(
-        "BookOrbit Sync: Please configure your server URL and credentials in settings."
+        "BookOrbit Sync: Please configure your server URL and an API key or username and password in settings."
       );
       return;
     }
@@ -163,6 +165,8 @@ export default class BookOrbitPlugin extends Plugin {
   }
 
 async login(): Promise<string> {
+    if (this.settings.apiKey) return this.settings.apiKey;
+
     const baseUrl = this.settings.serverUrl.replace(/\/$/, "");
 
     // Step 1: log in with username/password to get a refresh_token cookie
@@ -620,6 +624,20 @@ class BookOrbitSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName("API key")
+      .setDesc("Create a key in BookOrbit under Settings > You > API keys. When set, it is used instead of username and password.")
+      .addText((text) => {
+        text
+          .setPlaceholder("bok_...")
+          .setValue(this.plugin.settings.apiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.apiKey = value.trim();
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.type = "password";
+      });
 
     new Setting(containerEl)
       .setName("Username")
