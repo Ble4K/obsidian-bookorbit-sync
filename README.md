@@ -47,7 +47,7 @@ ___
 2. Format and styling templates
 ___
 ## Privacy & Network Use
-This plugin connects to the BookOrbit server URL you provide in settings, using your API key or username and password, to fetch your own highlights, annotations, perosonal reviews, and book covers. No data is sent to any third party or any server other than the one you configure.
+This plugin connects to the BookOrbit server URL you provide in settings, using your API key or username and password, to fetch your own highlights, annotations, personal reviews, and book covers. No data is sent to any third party or any server other than the one you configure.
 ___
 ## License
 This project is licensed under the GNU General Public License v3.0.
